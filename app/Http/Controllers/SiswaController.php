@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Siswa;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
 class SiswaController extends Controller
@@ -10,9 +11,24 @@ class SiswaController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $siswa = Siswa::paginate(10);
+        $query = Siswa::query();
+
+        // Check if there's a search query
+        if ($request->has('search') && $request->search !== '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                    ->orWhere('kelas', 'like', "%{$search}%")
+                    ->orWhere('jenis_kelamin', 'like', "%{$search}%")
+                    ->orWhere('alamat', 'like', "%{$search}%");
+            });
+        }
+
+        // Paginate filtered results
+        $siswa = $query->paginate(10);
+
         $siswaCollection = $siswa->getCollection()->map(function ($data) {
             return [
                 'id' => $data->id,
@@ -72,8 +88,15 @@ class SiswaController extends Controller
      */
     public function show($id)
     {
-        $siswa = Siswa::findOrFail($id); // Throws 404 if not found
-        return response()->json($siswa); // Sends the result as JSON
+        try {
+            $siswa = Siswa::findOrFail($id);
+            return response()->json($siswa);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data siswa tidak ditemukan'
+            ], 404, [], JSON_PRETTY_PRINT);
+        }
     }
 
 
@@ -83,13 +106,23 @@ class SiswaController extends Controller
     public function update(Request $request, $id)
     {
         $siswa = Siswa::findOrFail($id);
-        $siswa->update($request->only('nama_lengkap'));
+
+        $validated = $request->validate([
+            'nama' => 'sometimes|string|max:255',
+            'kelas' => 'sometimes|string|max:255',
+            'alamat' => 'sometimes|string|max:255',
+            'jenis_kelamin' => 'sometimes|string|max:255',
+        ]);
+
+        $siswa->update($validated);
 
         return response()->json([
             'status' => 'updated',
             'data' => $siswa
         ]);
     }
+
+
 
 
     /**
