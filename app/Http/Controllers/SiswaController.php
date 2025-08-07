@@ -12,8 +12,7 @@ class SiswaController extends Controller
      */
     public function index()
     {
-        $siswa = Siswa::paginate(10); // Choose your page size
-
+        $siswa = Siswa::paginate(10);
         $siswaCollection = $siswa->getCollection()->map(function ($data) {
             return [
                 'id' => $data->id,
@@ -54,7 +53,7 @@ class SiswaController extends Controller
                 'nama.required' => 'Nama harus diisi',
                 'kelas.required' => 'Kelas harus diisi',
                 'jenis_kelamin.required' => 'Jenis kelamin harus diisi',
-                'alamat.required' => 'Alamat kelamin harus diisi',
+                'alamat.required' => 'Alamat harus diisi',
             ]
 
         );
