@@ -25,7 +25,7 @@ class SiswaController extends Controller
                     ->orWhere('alamat', 'like', "%{$search}%");
             });
         }
-
+$query->orderBy('created_at', 'desc');
         // Paginate filtered results
         $siswa = $query->paginate(10);
 
